@@ -69,7 +69,6 @@ func NewLeaderElecter(host []string, root, node string, timeout time.Duration) (
 
 	ex, _, err := c.Exists(root)
 	if err == nil && ex == false {
-		//if _, e := c.Create(root, nil, 0, zk.WorldACL(zk.PermAll)); e != nil {
 		if _, e := c.Create(root, []byte("1"), 0, zk.WorldACL(zk.PermAll)); e != nil {
 			fmt.Println("creare zookeeper node failed.")
 			return nil, e
@@ -82,9 +81,7 @@ func NewLeaderElecter(host []string, root, node string, timeout time.Duration) (
 		fmt.Println("create zookeeper node failed.")
 		return nil, err
 	}
-	fmt.Println(s)
-	fmt.Println(strings.TrimPrefix(s, root+"/"))
-
+	
 	return &Leader{node: node, root: root, conn: c, sid: strings.TrimPrefix(s, root+"/"), stop: make(chan bool, 1)}, nil
 }
 
@@ -126,19 +123,16 @@ func (le *Leader) isLeader(children []string) bool {
 		return true
 	}
 
-	fmt.Println("children:", children, "node:", le.node)
 	var node, sid string
 	for _, s := range children {
 		ids := strings.Split(s, le.node)
 		id := ids[len(ids)-1]
-		fmt.Println("ids:", ids, " id:", id, " node:", le.node)
 		if node == "" || node > id {
 			node = id
 			sid = s
 		}
 	}
 
-	fmt.Println(le.sid, sid)
 	if sid == le.sid {
 		return true
 	} else {
